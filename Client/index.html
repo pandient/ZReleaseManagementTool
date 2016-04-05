@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <title>Hello World!</title>
   </head>
+  
+   <script src="connection.js"></script>
+
   <body>
-    <h1>Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+    <h1>List of Products</h1>
+    <div id='products'> </div>
+	<button onclick="connect()">Click me</button>
   </body>
 </html>

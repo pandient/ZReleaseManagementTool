@@ -40,5 +40,24 @@ namespace RelSvr
             }
         }
 
+        public static int TCPReadTimeout
+        {
+            get
+            {
+                int p;
+
+                return int.TryParse(Item("TCPReadTimeout"), out p) ? 1000*p : 0;
+            }
+        }
+
+        public static int TCPWriteTimeout
+        {
+            get
+            {
+                int p;
+
+                return int.TryParse(Item("TCPWriteTimeout"), out p) ? 1000 * p : 0;
+            }
+        }
     }
 }

@@ -49,7 +49,15 @@ function resetBuffer() {
     respBuff = new buffer.Buffer(0);
 }
 
+function isBusy() {
+    return client.readyState != 'closed';
+}
+
 function getProducts() {
+    if (isBusy()) {
+        console.log("Connection is busy");
+        return;
+    }
     connect();
     resetBuffer();
 	    
@@ -59,6 +67,10 @@ function getProducts() {
 }
 
 function getVersions() {
+    if (isBusy()) {
+        console.log("Connection is busy");
+        return;
+    }
     var productName = getProductName();
     connect();
     resetBuffer();

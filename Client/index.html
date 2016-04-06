@@ -1,38 +1,42 @@
 ﻿<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>ZE Release Manager</title>
+    <link rel="stylesheet" href="css/photon.min.css">
+    <script src="js/menu.js" charset="utf-8"></script>
+    <script src="connection.js"></script>
+    <script src="dataprocessing.js"></script>
   </head>
   
-   <script src="connection.js"></script>
-   <script src="dataprocessing.js"></script>
+  <body>  
+  
+    <div class="window">
 
-  <body>
-    <h1>List of Products</h1>
-    <div id='products'> </div>
-	<button onclick="getProducts()">Click me</button>
-    
-    <h1>List of Versions</h1>
-    <input type="text" id='productName' />
-	 <div id='versions'> </div>
-    <button onclick="getVersions(getProductName())">Click me</button>
-	
-	
-	<h1>List of Files</h1>
-    
-	 <div id='fileList'> </div>
-    <button onclick="getFileList('DDX','4.10')">Click me</button>
-	
-	
-	<h1>Check Alert</h1>
-    
-	 <div id='alert'> </div>
-    <button onclick="checkAlert('DDX','4.10')">Check Alert</button>
-	
-	<h1>Download</h1>
-    
-	
-    <button onclick="getFile('DDX','4.10','Data_Direct_AddIn_4.10.zip')">Click me</button>
+      <header class="toolbar toolbar-header">
+        <h1 class="title">ZE Release Manager</h1>
+      </header>
+
+      <div class="window-content">
+        <div class="pane-group">
+		
+          <div class="pane pane-sm sidebar">
+            <nav class="nav-group">
+              <h5 class="nav-group-title">Releases</h5>	  
+            </nav>
+          </div>
+
+          <div class="pane">
+			<table class="table-striped" id="table1"></table>
+          </div>
+		  
+		  <div class="pane">
+			<table class="table-striped" id="table2"></table>
+		  </div>
+		  
+        </div>
+      </div>
+    </div>
   </body>
+
 </html>

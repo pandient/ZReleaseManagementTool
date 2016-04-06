@@ -2,7 +2,10 @@ var net = require('net');
 var buffer = require('buffer');
 var reqBuff;
 var respBuff;
+var connectionActive = false;
 
+const SERVER_IP = '10.0.1.207';
+const SERVER_PORT = 10001;
 const PRODUCTS = 1;
 const VERSIONS = 2;
 const FILE_LIST = 4;
@@ -10,51 +13,47 @@ const DOWNLOAD_FILE = 5;
 const ALERT = 6;
 
 var USER = 'saad';
-
-
-
 var client = new net.Socket();
-init();
 
-function init() {
-	client.on('data', function (data) {
-			console.log('Received: ' + data);
-			if (client.messageReadSize == 0) {
-				client.messageSize = data.readInt32LE(0);
-				//client.messageSize = 20;
-				console.log(client.messageSize);
-			}
-			client.messageReadSize += data.length;
-			respBuff = Buffer.concat([respBuff, data], respBuff.length + data.length);
+client.on('data', function (data) {
+	console.log('Received: ' + data);
+	
+	if (client.messageReadSize == 0) {
+		client.messageSize = data.readInt32LE(0);
+		console.log(client.messageSize);
+	}
+	client.messageReadSize += data.length;
+	respBuff = Buffer.concat([respBuff, data], respBuff.length + data.length);
+	if (client.messageReadSize >= client.messageSize + 64) {
+		var status = respBuff.readInt32LE(40)
+		if(status){
+			console.log( 'error status  ' + respBuff.readInt32LE(40));
+		}
+	    
+		processResponse(respBuff);
+		//client.destroy();
+	}
+	//client.destroy(); // kill client after server's response
+});
 
-			if (client.messageReadSize >= client.messageSize + 64) {
-				processResponse(respBuff);
-				//displayProducts(respBuff);
-				client.destroy();
-			}
+client.on('close', function () {
+	console.log('Connection closed');
+	connectionActive = false;
+});
 
-			//client.destroy(); // kill client after server's response
-		});
+client.on('error', function (error) {
+	console.log('Error' + error);
+	alert(error);
+});
 
-		client.on('close', function () {
-			console.log('Connection closed');
-		});
-
-		client.on('error', function (error) {
-			console.log('Error' + error);
-			alert(error);
-		});
-}
 
 function connect() {
     if (client.readyState != 'closed') {
         return;
     }
-    client.connect(10001, '10.0.1.207', function() {
+    client.connect(SERVER_PORT, SERVER_IP, function() {
         console.log('Connected');
     });
-
-    
 }
 
 function resetBuffer() {
@@ -69,97 +68,52 @@ function isBusy() {
 }
 
 function getProducts() {
- 
+	connectionActive = true;
     connect();
     resetBuffer();
-	    
-	// reqBuff.writeUInt32BE(0, 0);
-	// reqBuff.writeUInt32BE(PRODUCTS,4);
-	// reqBuff.write('tony', 8,32);
 	setHeader(PRODUCTS,USER,'');
 	client.write(reqBuff);
 }
 
 function getVersions(product) {
-  
-    var productName = product;
+	connectionActive = true;
     connect();
     resetBuffer();
-
-    reqBuff.writeUInt32BE(productName.length, 0);
-    reqBuff.writeUInt32BE(VERSIONS, 4);
-    reqBuff.write('tony', 8,32);
-    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(productName)], reqBuff.length + productName.length);
+    setHeader(VERSIONS,USER,product);
     client.write(reqBuff);
-
 }
 
 function getFileList(product, version) {
-  
-	var productName = product;
-    var versionName = version;
-	
+	connectionActive = true;
     connect();
     resetBuffer();
-
-    reqBuff.writeUInt32BE(versionName.length + productName.length + 1, 0);
-    reqBuff.writeUInt32BE(FILE_LIST, 4);
-    reqBuff.write('tony', 8,32);
-    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(productName + '\r' + versionName)], reqBuff.length + productName.length + versionName.length + 1);
+	setHeader(FILE_LIST,USER,product + '\r' + version);
     client.write(reqBuff);
-
 }
 
 function getFile(product, version, file) {
-  
-    var productName = product;
-    var versionName = version;
-	var fileName = file;
+	connectionActive = true;
 	saveFile.fileName = file;
-	
-	var query = productName + '\r' + versionName + '\r' +  fileName;
+	var query = product + '\r' + version + '\r' +  file;
     connect();
     resetBuffer();
-
-    // reqBuff.writeUInt32BE(query.length, 0);
-    // reqBuff.writeUInt32BE(DOWNLOAD_FILE, 4);
-    // reqBuff.write('tony', 8,32);
-    // reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
 	setHeader(DOWNLOAD_FILE,USER,query);
     client.write(reqBuff);
-
 }
 
-function  checkAlert(product, version) {
-
-	var productName = product;
-    var versionName = version;
-	
-	var query = productName + '\r' + versionName;
+function  checkAlert(product, version , callback) {
+	connectionActive = true;
+	var query = product + '\r' + version;
     connect();
     resetBuffer();
-	
 	setHeader(ALERT,USER,query);
     client.write(reqBuff);
-
+	checkAlert.callback = callback;
 }
-
 
 function setHeader(reqId,user,query){
 	reqBuff.writeUInt32BE(query.length, 0);
     reqBuff.writeUInt32BE(reqId, 4);
     reqBuff.write(user, 8,32);
     reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
-
 }
-
-
-
-function getProductName() {
-    var input = document.getElementById('productName');
-    return input.value;
-}
-
-
-
-

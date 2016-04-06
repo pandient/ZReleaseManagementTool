@@ -122,12 +122,13 @@ namespace RelSvr
         //    }
         //}
 
-        private static char SEP = '\a';
+        private static char SEP = '\r';
 
         private static int REQ_PRODUCT = 0x1;
         private static int REQ_VERSIONS = 0x2;
         private static int REQ_VERSION_FILE_LIST = 0x4;
-        private static int REQ_DOWNLOAD = 0x8;
+        private static int REQ_DOWNLOAD_ALERT = 0x100;
+        private static int REQ_DOWNLOAD_FILE = 0x200;
 
         private static uint STATUS_OK = 0;
         private static uint STATUS_ERR = 0x1;
@@ -141,7 +142,6 @@ namespace RelSvr
 
         private Socket m_socket = null;
         private TRequestHeader m_request_hdr = new TRequestHeader();
-        //private TResponseHeader m_response_hdr = new TResponseHeader();
 
         public CService(Socket sock)
         {
@@ -176,7 +176,11 @@ namespace RelSvr
                     {
                         SendFileList();
                     }
-                    else if (m_request_hdr.request_id == REQ_DOWNLOAD)
+                    else if (m_request_hdr.request_id == REQ_DOWNLOAD_ALERT)
+                    {
+                        SendAlert();
+                    }
+                    else if (m_request_hdr.request_id == REQ_DOWNLOAD_FILE)
                     {
                         SendFile();
                     }
@@ -433,6 +437,10 @@ namespace RelSvr
 
             SendHeader((uint)len, STATUS_OK, null);
             m_socket.SendFile(filename);
+        }
+
+        private void SendAlert()
+        {
         }
 
         private void SendError()

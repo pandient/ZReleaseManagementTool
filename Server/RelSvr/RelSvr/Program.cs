@@ -10,31 +10,31 @@ namespace RelSvr
     {
         static void Main(string[] args)
         {
-            Thread unicast = null;
-            Thread multicast = null;
+            Thread svr = null;
+            Thread brdsvr = null;
 
             if (CUnicast.IsRunable())
             {
-                unicast = new Thread(UnicastListening);
-                unicast.Start();
+                svr = new Thread(RunService);
+                svr.Start();
             }
 
             if (CMulticast.IsRunable())
             {
-                multicast = new Thread(MulticastListening);
-                multicast.Start();
+                brdsvr = new Thread(RunBroadcastService);
+                brdsvr.Start();
             }
 
-            if(unicast != null)unicast.Join();
-            if (multicast != null) multicast.Join();
+            if(svr != null)svr.Join();
+            if (brdsvr != null) brdsvr.Join();
         }
 
-        private static void UnicastListening()
+        private static void RunService()
         {
             new CUnicast();
         }
 
-        private static void MulticastListening()
+        private static void RunBroadcastService()
         {
             new CMulticast();
         }

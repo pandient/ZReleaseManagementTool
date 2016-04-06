@@ -658,7 +658,12 @@ namespace RelSvr
 
         private string who()
         {
-            return (string.IsNullOrEmpty(m_request_hdr.user) ? "":m_request_hdr.user + " @ ") + IPAddress.Parse(((IPEndPoint)m_sock.RemoteEndPoint).Address.ToString());
+            string s;
+
+            s = DateTime.Now.ToString() + SEP;
+            s += (string.IsNullOrEmpty(m_request_hdr.user) ? "" : m_request_hdr.user + " @ ") + IPAddress.Parse(((IPEndPoint)m_sock.RemoteEndPoint).Address.ToString());
+
+            return s;
         }
 
         private void Broadcast(string msg)

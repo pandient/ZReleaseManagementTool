@@ -115,6 +115,7 @@ function getFile(product, version, file) {
     var productName = product;
     var versionName = version;
 	var fileName = file;
+	saveFile.fileName = file;
 	
 	var query = productName + '\r' + versionName + '\r' +  fileName;
     connect();

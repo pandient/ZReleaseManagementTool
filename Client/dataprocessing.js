@@ -23,11 +23,29 @@ function displayAlert(data) {
 function saveFile(data) {
 	//
 	var fs = require('fs');
+	const dialog = require('electron').remote.dialog;
 	
-	fs.writeFile('C:\\Workspace\\test.zip', data.slice(64) , (err) => {
-			if (err) throw err;
-			console.log('It\'s saved!');
+	var options = {
+		title : 'Save as',
+		defaultPath : saveFile.fileName,
+		filters : [
+		 	{ name: 'All Files', extensions: ['*'] },
+			{ name: 'Archive', extensions: ['zip','rar', '7z'] }
+		]		
+	
+	};
+	
+	
+	dialog.showSaveDialog(options,function(name) {
+		fs.writeFile(name, data.slice(64) , (err) => {
+				if (err) throw err;
+				console.log('It\'s saved!');
+		});
 	});
+	
+	
+	
+	
 }
 
 

@@ -118,16 +118,16 @@ namespace RelSvr
             fileLen = (uint)(new FileInfo(fileName).Length);
         }
 
-        public static void GetAlert(string product, string version, out string alert)
+        public static void GetAlert(string product, string version, out string fileName, out uint fileLen)
         {
             CheckProduct(product);
 
-            string fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\$alert";
-
-            alert = string.Empty;
+            fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\$alert";
+            fileLen = 0;
             if (!File.Exists(fileName)) return;
+            fileLen = (uint)(new FileInfo(fileName).Length);
 
-            alert = File.ReadAllText(fileName);
+            //alert = File.ReadAllText(fileName);
         }
 
         class TVersion
@@ -363,6 +363,11 @@ namespace RelSvr
         {
             bool iserr = ((status & STATUS_ERR) != 0 && !string.IsNullOrEmpty(err));
 
+            //if (status != 0)
+            //{
+            //    status = status;
+            //}
+
             if (iserr)
             {
                 datasize = (uint)err.Length;
@@ -555,6 +560,8 @@ namespace RelSvr
             string product;
             string version;
             string alert;
+            string file;
+            uint len;
 
             ReadData(buff, (int)m_request_hdr.data_length);
             tmp = Byte2Str(buff, 0, (int)m_request_hdr.data_length);
@@ -580,7 +587,7 @@ namespace RelSvr
 
             try
             {
-                CRelease.GetAlert(product, version, out alert);
+                CRelease.GetAlert(product, version, out file, out len);
             }
             catch (Exception ex)
             {
@@ -588,13 +595,14 @@ namespace RelSvr
                 return;
             }
 
-            if (string.IsNullOrEmpty(alert))
+            if (len <= 0)
             {
                 SendHeader(0, STATUS_OK, null);
             }
             else
             {
-                SendHeader(0, STATUS_ERR|ERR_ALERT, alert);
+                SendHeader(len, STATUS_ERR|ERR_ALERT, null);
+                m_sock.SendFile(file);
             }
 
             Broadcast(who() + " asks for Alert");

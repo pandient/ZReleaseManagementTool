@@ -79,21 +79,5 @@ namespace RelSvr
             }
         }
 
-        //private void Client()
-        //{
-        //    Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-        //    IPEndPoint ipep = new IPEndPoint(IPAddress.Any, CSettings.UDPPort);
-        //    sock.Bind(ipep);
-
-        //    IPAddress ip = IPAddress.Parse(CSettings.UDPAddress);
-
-        //    sock.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(ip,IPAddress.Any));
-
-        //    byte[] b=new byte[1024];
-        //    sock.Receive(b);
-        //    string str = System.Text.Encoding.ASCII.GetString(b, 0, b.Length);
-        //    Console.WriteLine(str.Trim());
-        //}
     }
 }

@@ -28,13 +28,30 @@ namespace RelSvr
             }
         }
 
+        private static TVersion GetVersionObject(string file)
+        {
+            string[] tokens = file.Split('.');
+            int n;
+            TVersion    ver = new TVersion(file);
+
+            for (int k = 0; k < tokens.Length; k++)
+            {
+                if (k == 0 && int.TryParse(tokens[k], out n)) ver.major = n;
+
+                if (k > 0 && ver.major == 0) break;
+                if (k == 1 && int.TryParse(tokens[k], out n)) ver.minor = n;
+                if (k == 2 && int.TryParse(tokens[k], out n)) ver.relase = n;
+            }
+            return ver;
+        }
+
         public static string[] GetVersions(string product)
         {
             CheckProduct(product);
 
             string file;
             int pos;
-            List<string> versions = new List<string>();
+            List<TVersion> vers = new List<TVersion>();
 
             foreach (string f in Directory.GetDirectories(CSettings.ProductDirectory(product)))
             {
@@ -50,11 +67,11 @@ namespace RelSvr
 
                 if (file.ToArray()[0] >= '0' && file.ToArray()[0] <= '9')
                 {
-                    versions.Add(file);
+                    vers.Add(GetVersionObject(file));
                 }
             }
 
-            return versions.ToArray();
+            return (from f in vers orderby f.major, f.minor, f.relase select f.name).ToArray();
         }
 
         public static string[] GetFileList(string product, string version)
@@ -111,6 +128,22 @@ namespace RelSvr
             if (!File.Exists(fileName)) return;
 
             alert = File.ReadAllText(fileName);
+        }
+
+        class TVersion
+        {
+            public int major;
+            public int minor;
+            public int relase;
+            public string name;
+
+            public TVersion(string file)
+            {
+                major = 0;
+                minor = 0;
+                relase = 0;
+                name = file;
+            }
         }
     }
 

@@ -48,13 +48,18 @@ namespace RelSvr
             }
         }
 
+        private static int GetTimeout(string key)
+        {
+            int p;
+
+            return int.TryParse(Item(key), out p) ? 1000 * p : 0;
+        }
+
         public static int TCPReadTimeout
         {
             get
             {
-                int p;
-
-                return int.TryParse(Item("TCPReadTimeout"), out p) ? 1000*p : 0;
+                return GetTimeout("TCPReadTimeout");
             }
         }
 
@@ -62,10 +67,43 @@ namespace RelSvr
         {
             get
             {
-                int p;
-
-                return int.TryParse(Item("TCPWriteTimeout"), out p) ? 1000 * p : 0;
+                return GetTimeout("TCPWriteTimeout");
             }
         }
+
+        public static int UDPPort
+        {
+            get
+            {
+                int p;
+
+                return int.TryParse(Item("UDPort"), out p) ? p : -1;
+            }
+        }
+
+        public static string UDPAddress
+        {
+            get
+            {
+                return Item("UDPAddress");
+            }
+        }
+
+        public static int UDPReadTimeout
+        {
+            get
+            {
+                return GetTimeout("UDPReadTimeout");
+            }
+        }
+
+        public static int UDPWriteTimeout
+        {
+            get
+            {
+                return GetTimeout("UDPWriteTimeout");
+            }
+        }
+
     }
 }

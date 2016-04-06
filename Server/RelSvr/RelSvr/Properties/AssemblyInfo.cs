@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("RelSvr")]
+[assembly: AssemblyTitle("Hackthon Project")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("ZEPower Group")]
 [assembly: AssemblyProduct("RelSvr")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright ©  2016, ZEPower Group")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

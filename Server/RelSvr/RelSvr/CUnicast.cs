@@ -153,15 +153,15 @@ namespace RelSvr
         private static uint ERR_ALERT = 0x4000;
         private static uint ERR_NOT_ADMIN = 0x8000;
 
-        private Socket m_socket = null;
+        private Socket m_sock = null;
         private TRequestHeader m_request_hdr = new TRequestHeader();
 
         public CService(Socket sock)
         {
-            m_socket = sock;
+            m_sock = sock;
 
-            m_socket.ReceiveTimeout = CSettings.TCPReadTimeout;
-            m_socket.SendTimeout = CSettings.TCPWriteTimeout;
+            m_sock.ReceiveTimeout = CSettings.TCPReadTimeout;
+            m_sock.SendTimeout = CSettings.TCPWriteTimeout;
         }
 
         public static string Byte2Str(byte []buff, int startPos, int size)
@@ -206,6 +206,8 @@ namespace RelSvr
                         SendError();
                         break;
                     }
+
+                    if (!Peek()) break;
                 }
             }
             catch (Exception ex)
@@ -216,13 +218,26 @@ namespace RelSvr
             {
                 try
                 {
-                    m_socket.Shutdown(SocketShutdown.Both);
-                    m_socket.Close();
+                    m_sock.Shutdown(SocketShutdown.Both);
+                    m_sock.Close();
                 }
                 catch
                 {
                 }
             }
+        }
+
+        private bool Peek()
+        {
+            try
+            {
+                return (m_sock.Poll(CSettings.TCPReadTimeout, SelectMode.SelectRead));
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
         }
 
         private void ReadData(byte []buff, int bytesToRead)
@@ -232,7 +247,7 @@ namespace RelSvr
             size = 0;
             while (size < bytesToRead)
             {
-                size += m_socket.Receive(buff, size, bytesToRead - size, SocketFlags.None);
+                size += m_sock.Receive(buff, size, bytesToRead - size, SocketFlags.None);
             }
         }
 
@@ -285,18 +300,18 @@ namespace RelSvr
                 datasize = (uint)err.Length;
             }
 
-            m_socket.Send(BitConverter.GetBytes(datasize));
-            m_socket.Send(BitConverter.GetBytes(m_request_hdr.request_id));
+            m_sock.Send(BitConverter.GetBytes(datasize));
+            m_sock.Send(BitConverter.GetBytes(m_request_hdr.request_id));
 
-            m_socket.Send(Encoding.ASCII.GetBytes(UserID));
+            m_sock.Send(Encoding.ASCII.GetBytes(UserID));
 
-            m_socket.Send(BitConverter.GetBytes(status));
+            m_sock.Send(BitConverter.GetBytes(status));
 
-            m_socket.Send(new byte[20]);
+            m_sock.Send(new byte[20]);
 
             if (iserr)
             {
-                m_socket.Send(Encoding.ASCII.GetBytes(err));
+                m_sock.Send(Encoding.ASCII.GetBytes(err));
             }
         }
 
@@ -309,7 +324,7 @@ namespace RelSvr
 
             SendHeader((uint)products.Length, STATUS_OK, null);
 
-            m_socket.Send(Encoding.ASCII.GetBytes(products));
+            m_sock.Send(Encoding.ASCII.GetBytes(products));
         }
 
         private void SendVersions()
@@ -347,7 +362,7 @@ namespace RelSvr
             all = string.Join(SEP.ToString(), versions);
 
             SendHeader((uint)all.Length, STATUS_OK, null);
-            m_socket.Send(Encoding.ASCII.GetBytes(all));
+            m_sock.Send(Encoding.ASCII.GetBytes(all));
         }
 
         private void SendFileList()
@@ -400,7 +415,7 @@ namespace RelSvr
             all = string.Join(SEP.ToString(), data);
 
             SendHeader((uint)all.Length, STATUS_OK, null);
-            m_socket.Send(Encoding.ASCII.GetBytes(all));
+            m_sock.Send(Encoding.ASCII.GetBytes(all));
         }
 
         private void SendFile()
@@ -453,7 +468,7 @@ namespace RelSvr
             }
 
             SendHeader((uint)len, STATUS_OK, null);
-            m_socket.SendFile(filename);
+            m_sock.SendFile(filename);
         }
 
         private void SendAlert()
@@ -533,18 +548,24 @@ namespace RelSvr
             Start();
         }
 
-        private static void Start()
+        public static bool IsRunable()
         {
             int port = CSettings.TCPPort;
+
             if (port <= 0)
             {
                 CLog.Log(string.Format("Invalid TCP port {0}", port));
-                return;
+                return false;
             }
 
+            return true;
+        }
+
+        private void Start()
+        {
             IPHostEntry host = Dns.Resolve(Dns.GetHostName());
             IPAddress ip = host.AddressList[0];
-            IPEndPoint point = new IPEndPoint(ip, port);
+            IPEndPoint point = new IPEndPoint(ip, CSettings.TCPPort);
 
             Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 

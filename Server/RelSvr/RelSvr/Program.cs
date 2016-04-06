@@ -10,14 +10,23 @@ namespace RelSvr
     {
         static void Main(string[] args)
         {
-            var unicast = new Thread(UnicastListening);
-            var multicast = new Thread(MulticastListening);
+            Thread unicast = null;
+            Thread multicast = null;
 
-            unicast.Start();
-            unicast.Join();
+            if (CUnicast.IsRunable())
+            {
+                unicast = new Thread(UnicastListening);
+                unicast.Start();
+            }
 
-            //multicast.Start();
-            //multicast.Join();
+            if (CMulticast.IsRunable())
+            {
+                multicast = new Thread(MulticastListening);
+                multicast.Start();
+            }
+
+            if(unicast != null)unicast.Join();
+            if (multicast != null) multicast.Join();
         }
 
         private static void UnicastListening()

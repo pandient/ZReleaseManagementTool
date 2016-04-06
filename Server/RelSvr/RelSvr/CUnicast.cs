@@ -18,8 +18,20 @@ namespace RelSvr
 
         }
 
+        private static void CheckProduct(string product)
+        {
+            string []p = CSettings.Products.Split(',');
+
+            if (Array.FindIndex(CSettings.Products.Split(','), (w) => { return string.Compare(w, product, true) == 0; }) < 0)
+            {
+                throw new Exception("Invalid " + product);
+            }
+        }
+
         public static string[] GetVersions(string product)
         {
+            CheckProduct(product);
+
             string file;
             int pos;
             List<string> versions = new List<string>();
@@ -47,6 +59,8 @@ namespace RelSvr
 
         public static string[] GetFileList(string product, string version)
         {
+            CheckProduct(product);
+
             string dir = CSettings.ProductDirectory(product) + "\\" + version;
             string file;
             int pos;
@@ -75,6 +89,8 @@ namespace RelSvr
 
         public static void GetFileInfo(string product, string version, string file, out string fileName, out uint fileLen)
         {
+            CheckProduct(product);
+
             fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\" + file;
 
             if (!File.Exists(fileName))
@@ -87,6 +103,8 @@ namespace RelSvr
 
         public static void GetAlert(string product, string version, out string alert)
         {
+            CheckProduct(product);
+
             string fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\.alert";
 
             alert = string.Empty;
@@ -134,12 +152,13 @@ namespace RelSvr
 
         private static char SEP = '\r';
 
-        private static int REQ_PRODUCT = 0x1;
-        private static int REQ_VERSIONS = 0x2;
-        private static int REQ_ADMIN = 0x3;
-        private static int REQ_VERSION_FILE_LIST = 0x4;
-        private static int REQ_DOWNLOAD_FILE = 0x5;
-        private static int REQ_DOWNLOAD_ALERT = 0x6;
+        private static int REQ_PRODUCT = 1;
+        private static int REQ_VERSIONS = 2;
+        private static int REQ_ADMIN = 3;
+        private static int REQ_VERSION_FILE_LIST = 4;
+        private static int REQ_DOWNLOAD_FILE = 5;
+        private static int REQ_DOWNLOAD_ALERT = 6;
+        private static int REQ_BROADCAST = 7;
 
         private static uint STATUS_OK = 0;
         private static uint STATUS_ERR = 0x1;
@@ -200,6 +219,10 @@ namespace RelSvr
                     else if (m_request_hdr.request_id == REQ_ADMIN)
                     {
                         SendAdmin();
+                    }
+                    else if (m_request_hdr.request_id == REQ_BROADCAST)
+                    {
+                        SendBroadcast();
                     }
                     else
                     {
@@ -325,6 +348,8 @@ namespace RelSvr
             SendHeader((uint)products.Length, STATUS_OK, null);
 
             m_sock.Send(Encoding.ASCII.GetBytes(products));
+
+            Broadcast(m_request_hdr.user + " asks for products");
         }
 
         private void SendVersions()
@@ -363,6 +388,8 @@ namespace RelSvr
 
             SendHeader((uint)all.Length, STATUS_OK, null);
             m_sock.Send(Encoding.ASCII.GetBytes(all));
+
+            Broadcast(m_request_hdr.user + " asks for versions");
         }
 
         private void SendFileList()
@@ -416,6 +443,8 @@ namespace RelSvr
 
             SendHeader((uint)all.Length, STATUS_OK, null);
             m_sock.Send(Encoding.ASCII.GetBytes(all));
+
+            Broadcast(m_request_hdr.user + " asks for file list");
         }
 
         private void SendFile()
@@ -469,6 +498,8 @@ namespace RelSvr
 
             SendHeader((uint)len, STATUS_OK, null);
             m_sock.SendFile(filename);
+
+            Broadcast(m_request_hdr.user + " downloads file " + file);
         }
 
         private void SendAlert()
@@ -520,7 +551,8 @@ namespace RelSvr
             {
                 SendHeader(0, STATUS_ERR|ERR_ALERT, alert);
             }
-            
+
+            Broadcast(m_request_hdr.user + " asks for Alert");
         }
 
         private void SendAdmin()
@@ -532,11 +564,52 @@ namespace RelSvr
             b = Array.FindIndex(admins, (w) => { return string.Compare(w, m_request_hdr.user, true) == 0; })>=0;
 
             SendHeader(0, (b? STATUS_OK:STATUS_ERR | ERR_NOT_ADMIN), null);
+
+            Broadcast(m_request_hdr.user + " says :  Am I an admin ?");
+        }
+
+        private void SendBroadcast()
+        {
+            uint len = m_request_hdr.data_length;
+            if (len <= 0)
+            {
+                SendHeader(0, STATUS_ERR|ERR_EMPTY, null);
+                return;
+            }
+
+            byte[] buff = new byte[1024];
+            string msg = string.Empty;
+            int ret;
+
+            while (true)
+            {
+                if (len == 0) break;
+
+                ret = m_sock.Receive(buff, 0, (buff.Length>len ? (int)len:buff.Length), SocketFlags.None);
+                if (ret > 0)
+                {
+                    len -= (uint)ret;
+                    msg += Byte2Str(buff, 0, ret);
+                }
+            }
+
+            SendHeader(0, STATUS_OK, null);
+
+            Broadcast(m_request_hdr.user + " says :  " + msg);
         }
 
         private void SendError()
         {
             SendHeader(0, STATUS_ERR | ERR_INVALID_REQ, null);
+        }
+
+        private void Broadcast(string msg)
+        {
+            lock (CEvent.m_lock)
+            {
+                CEvent.m_message = msg;
+            }
+            CEvent.Set();
         }
     }
 

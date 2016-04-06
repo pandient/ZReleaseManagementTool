@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CEvent.cs" />
     <Compile Include="CSettings.cs" />
     <Compile Include="CLog.cs" />
     <Compile Include="CMulticast.cs" />

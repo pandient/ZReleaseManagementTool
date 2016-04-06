@@ -48,25 +48,19 @@ namespace RelSvr
             {
                 m_sock.Connect(ipep);
 
-                byte[] b;
+                byte[] buff;
 
                 while (true)
                 {
-                    if (m_sock.Poll(CSettings.UDPReadTimeout, SelectMode.SelectRead))
-                    {
-                        byte[] buff = new byte[1024];
+                    CEvent.Wait();
 
-                        m_sock.Receive(buff);
-                        string str = System.Text.Encoding.ASCII.GetString(buff, 0, buff.Length);
-                        CLog.Log(str.Trim());
+                    lock (CEvent.m_lock)
+                    {
+                        buff = Encoding.ASCII.GetBytes(CEvent.m_message);
+                        m_sock.Send(buff, buff.Length, SocketFlags.None);
                     }
 
-                    if (m_sock.Poll(CSettings.UDPWriteTimeout, SelectMode.SelectWrite))
-                    {
-                        b = Encoding.ASCII.GetBytes(DateTime.Now.ToString());
-                        m_sock.Send(b, b.Length, SocketFlags.None);
-                        System.Threading.Thread.Sleep(CSettings.UDPReadTimeout);
-                    }
+                    CEvent.Reset();
                 }
             }
             catch (Exception ex)

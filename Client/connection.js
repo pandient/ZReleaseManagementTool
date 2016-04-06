@@ -7,6 +7,9 @@ const PRODUCTS = 1;
 const VERSIONS = 2;
 const FILE_LIST = 4;
 const DOWNLOAD_FILE = 5;
+const ALERT = 6;
+
+var USER = 'saad';
 
 
 
@@ -70,8 +73,10 @@ function getProducts() {
     connect();
     resetBuffer();
 	    
-	reqBuff.writeUInt8(PRODUCTS, 7);
-	reqBuff.write('tony', 8);
+	// reqBuff.writeUInt32BE(0, 0);
+	// reqBuff.writeUInt32BE(PRODUCTS,4);
+	// reqBuff.write('tony', 8,32);
+	setHeader(PRODUCTS,USER,'');
 	client.write(reqBuff);
 }
 
@@ -81,9 +86,9 @@ function getVersions(product) {
     connect();
     resetBuffer();
 
-    reqBuff.writeUInt8(productName.length, 3);
-    reqBuff.writeUInt8(VERSIONS, 7);
-    reqBuff.write('tony', 8);
+    reqBuff.writeUInt32BE(productName.length, 0);
+    reqBuff.writeUInt32BE(VERSIONS, 4);
+    reqBuff.write('tony', 8,32);
     reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(productName)], reqBuff.length + productName.length);
     client.write(reqBuff);
 
@@ -97,9 +102,9 @@ function getFileList(product, version) {
     connect();
     resetBuffer();
 
-    reqBuff.writeUInt8(versionName.length + productName.length + 1, 3);
-    reqBuff.writeUInt8(FILE_LIST, 7);
-    reqBuff.write('tony', 8);
+    reqBuff.writeUInt32BE(versionName.length + productName.length + 1, 0);
+    reqBuff.writeUInt32BE(FILE_LIST, 4);
+    reqBuff.write('tony', 8,32);
     reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(productName + '\r' + versionName)], reqBuff.length + productName.length + versionName.length + 1);
     client.write(reqBuff);
 
@@ -115,13 +120,39 @@ function getFile(product, version, file) {
     connect();
     resetBuffer();
 
-    reqBuff.writeUInt8(query.length, 3);
-    reqBuff.writeUInt8(DOWNLOAD_FILE, 7);
-    reqBuff.write('tony', 8);
-    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
+    // reqBuff.writeUInt32BE(query.length, 0);
+    // reqBuff.writeUInt32BE(DOWNLOAD_FILE, 4);
+    // reqBuff.write('tony', 8,32);
+    // reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
+	setHeader(DOWNLOAD_FILE,USER,query);
     client.write(reqBuff);
 
 }
+
+function  checkAlert(product, version) {
+
+	var productName = product;
+    var versionName = version;
+	
+	var query = productName + '\r' + versionName;
+    connect();
+    resetBuffer();
+	
+	setHeader(ALERT,USER,query);
+    client.write(reqBuff);
+
+}
+
+
+function setHeader(reqId,user,query){
+	reqBuff.writeUInt32BE(query.length, 0);
+    reqBuff.writeUInt32BE(reqId, 4);
+    reqBuff.write(user, 8,32);
+    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
+
+}
+
+
 
 function getProductName() {
     var input = document.getElementById('productName');

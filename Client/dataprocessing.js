@@ -15,6 +15,11 @@ function displayFileList(data) {
 	div.innerHTML = data.slice(64);
 }
 
+function displayAlert(data) {
+	var div = document.getElementById('alert');
+	div.innerHTML = data.slice(64);
+}
+
 function saveFile(data) {
 	//
 	var fs = require('fs');
@@ -27,7 +32,7 @@ function saveFile(data) {
 
 
 function processResponse(data) {
-    var reqId = data.readInt32LE(4);
+    var reqId = data.readUInt32LE(4);
     switch (reqId) {
         case PRODUCTS:
             displayProducts(data);
@@ -40,7 +45,11 @@ function processResponse(data) {
             break;	
 		case DOWNLOAD_FILE:
             saveFile(data);
-            break;		
+            break;	
+
+		case ALERT:
+            displayAlert(data);
+            break;				
 			
         default:
             break;

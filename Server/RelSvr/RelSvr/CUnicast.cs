@@ -152,25 +152,25 @@ namespace RelSvr
 
         private static char SEP = '\r';
 
-        private static int REQ_PRODUCT = 1;
-        private static int REQ_VERSIONS = 2;
-        private static int REQ_ADMIN = 3;
-        private static int REQ_VERSION_FILE_LIST = 4;
-        private static int REQ_DOWNLOAD_FILE = 5;
-        private static int REQ_DOWNLOAD_ALERT = 6;
-        private static int REQ_BROADCAST = 7;
+        private static int REQ_PRODUCT = 1;             // to ask for product list
+        private static int REQ_VERSIONS = 2;            // to ask for version list 
+        private static int REQ_ADMIN = 3;               // to test the caller is an admin
+        private static int REQ_VERSION_FILE_LIST = 4;   // to ask for file list
+        private static int REQ_DOWNLOAD_FILE = 5;       // to download a file
+        private static int REQ_DOWNLOAD_ALERT = 6;      // to download an alert
+        private static int REQ_BROADCAST = 7;           // to boradcast message
 
-        private static uint STATUS_OK = 0;
-        private static uint STATUS_ERR = 0x1;
+        private static uint STATUS_OK = 0;              // response OK
+        private static uint STATUS_ERR = 0x1;           // response NG
 
-        private static uint ERR_INVALID_REQ = 0x0100;
-        private static uint ERR_INVALID_SIZE = 0x0200;
-        private static uint ERR_INVALID_NAME = 0x0400;
-        private static uint ERR_EMPTY = 0x0800;
-        private static uint ERR_INVALID_COUNT = 0x1000;
-        private static uint ERR_EXCEPTION = 0x2000;
-        private static uint ERR_ALERT = 0x4000;
-        private static uint ERR_NOT_ADMIN = 0x8000;
+        private static uint ERR_INVALID_REQ = 0x0100;   // ERR : invalid request
+        private static uint ERR_INVALID_SIZE = 0x0200;  // ERR : invalid packet size
+        private static uint ERR_INVALID_NAME = 0x0400;  // ERR : invalid product name ?
+        private static uint ERR_EMPTY = 0x0800;         // ERR : missing name
+        private static uint ERR_INVALID_COUNT = 0x1000; // ERR : invalid number
+        private static uint ERR_EXCEPTION = 0x2000;     // ERR : an exception happened on the server side
+        private static uint ERR_ALERT = 0x4000;         // ERR : an alert exists (to prevent from further downloading)
+        private static uint ERR_NOT_ADMIN = 0x8000;     // ERR : not an admin
 
         private Socket m_sock = null;
         private TRequestHeader m_request_hdr = new TRequestHeader();
@@ -311,7 +311,7 @@ namespace RelSvr
         {
             get
             {
-                string user = Environment.UserName; //Environment.UserDomainName + "\\" +
+                string user = Environment.UserName; 
 
                 if (user.Length > 32)
                 {
@@ -657,20 +657,21 @@ namespace RelSvr
             IPAddress ip = host.AddressList[0];
             IPEndPoint point = new IPEndPoint(ip, CSettings.TCPPort);
 
-            Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        
             try
             {
-                listener.Bind(point);
-                listener.Listen(10);
+                sock.ExclusiveAddressUse = true;
+                sock.Bind(point);
+                sock.Listen(10);
 
                 while (true)
                 {
                     CLog.Log("Waiting for a connection...");
-                    Socket sock = listener.Accept();
+                    Socket child = sock.Accept();
                     CLog.Log("Accepted a connection");
 
-                    CService service = new CService(sock);
+                    CService service = new CService(child);
                     Thread thd = new Thread(service.Start);
                     thd.Start();
                 }

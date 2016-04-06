@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Hackthon Project")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("ZEMA Release Manager")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ZEPower Group")]
 [assembly: AssemblyProduct("RelSvr")]

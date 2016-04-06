@@ -181,6 +181,8 @@ namespace RelSvr
 
             m_sock.ReceiveTimeout = CSettings.TCPReadTimeout;
             m_sock.SendTimeout = CSettings.TCPWriteTimeout;
+            m_sock.LingerState = new LingerOption(true, 10);
+            m_sock.Ttl = 1;
         }
 
         public static string Byte2Str(byte []buff, int startPos, int size)
@@ -277,6 +279,7 @@ namespace RelSvr
         private bool ReadHeader()
         {
             byte[] buff = new byte[64];
+            int len;
 
             ReadData(buff, 64);
 
@@ -289,7 +292,16 @@ namespace RelSvr
 
             m_request_hdr.request_id = ntohl(BitConverter.ToUInt32(buff, sizeof(uint)));
 
-            m_request_hdr.user = Encoding.ASCII.GetString(buff, 2 * sizeof(uint), 32);
+            len = 0;
+            for (int k = 0; k < 32; k++)
+            {
+                if (buff[k + 2 * sizeof(uint)] == 0) break;
+                len++;
+            }
+            if (len > 0)
+            {
+                m_request_hdr.user = Encoding.ASCII.GetString(buff, 2 * sizeof(uint), len).Trim();
+            }
 
             return true;
 
@@ -349,7 +361,7 @@ namespace RelSvr
 
             m_sock.Send(Encoding.ASCII.GetBytes(products));
 
-            Broadcast(m_request_hdr.user + " asks for products");
+            Broadcast(who() + " asks for products");
         }
 
         private void SendVersions()
@@ -389,7 +401,7 @@ namespace RelSvr
             SendHeader((uint)all.Length, STATUS_OK, null);
             m_sock.Send(Encoding.ASCII.GetBytes(all));
 
-            Broadcast(m_request_hdr.user + " asks for versions");
+            Broadcast(who() + " asks for versions");
         }
 
         private void SendFileList()
@@ -444,7 +456,7 @@ namespace RelSvr
             SendHeader((uint)all.Length, STATUS_OK, null);
             m_sock.Send(Encoding.ASCII.GetBytes(all));
 
-            Broadcast(m_request_hdr.user + " asks for file list");
+            Broadcast(who() + " asks for file list");
         }
 
         private void SendFile()
@@ -499,7 +511,7 @@ namespace RelSvr
             SendHeader((uint)len, STATUS_OK, null);
             m_sock.SendFile(filename);
 
-            Broadcast(m_request_hdr.user + " downloads file " + file);
+            Broadcast(who() + " downloads file " + file);
         }
 
         private void SendAlert()
@@ -552,7 +564,7 @@ namespace RelSvr
                 SendHeader(0, STATUS_ERR|ERR_ALERT, alert);
             }
 
-            Broadcast(m_request_hdr.user + " asks for Alert");
+            Broadcast(who() + " asks for Alert");
         }
 
         private void SendAdmin()
@@ -565,7 +577,7 @@ namespace RelSvr
 
             SendHeader(0, (b? STATUS_OK:STATUS_ERR | ERR_NOT_ADMIN), null);
 
-            Broadcast(m_request_hdr.user + " says :  Am I an admin ?");
+            Broadcast(who() + " says :  Am I an admin ?");
         }
 
         private void SendBroadcast()
@@ -595,12 +607,17 @@ namespace RelSvr
 
             SendHeader(0, STATUS_OK, null);
 
-            Broadcast(m_request_hdr.user + " says :  " + msg);
+            Broadcast(who() + " says :  " + msg);
         }
 
         private void SendError()
         {
             SendHeader(0, STATUS_ERR | ERR_INVALID_REQ, null);
+        }
+
+        private string who()
+        {
+            return IPAddress.Parse(((IPEndPoint)m_sock.RemoteEndPoint).Address.ToString()) + (string.IsNullOrEmpty(m_request_hdr.user) ? " ":" @ " + m_request_hdr.user);
         }
 
         private void Broadcast(string msg)

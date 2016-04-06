@@ -28,19 +28,30 @@ namespace RelSvr
             }
         }
 
+        private static int GetNumber(string str)
+        {
+            int num = 0;
+            char []ary = str.ToArray();
+
+            for (int k = 0; k < ary.Length; k++)
+            {
+                if (ary[k] < '0' || ary[k] > '9') break;
+                num *= 10;
+                num += ary[k] - '0';
+            }
+            return num;
+        }
+
         private static TVersion GetVersionObject(string file)
         {
             string[] tokens = file.Split('.');
-            int n;
             TVersion    ver = new TVersion(file);
 
             for (int k = 0; k < tokens.Length; k++)
             {
-                if (k == 0 && int.TryParse(tokens[k], out n)) ver.major = n;
-
-                if (k > 0 && ver.major == 0) break;
-                if (k == 1 && int.TryParse(tokens[k], out n)) ver.minor = n;
-                if (k == 2 && int.TryParse(tokens[k], out n)) ver.relase = n;
+                if (k == 0) ver.major = GetNumber(tokens[k]);
+                if (k == 1) ver.minor = GetNumber(tokens[k]);
+                if (k == 2) ver.relase = GetNumber(tokens[k]);
             }
             return ver;
         }

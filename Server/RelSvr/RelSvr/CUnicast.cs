@@ -120,7 +120,7 @@ namespace RelSvr
         private static extern uint ntohl(uint netlong);
 
         [DllImport("Ws2_32.dll")]
-        private static extern ushort htonl(uint hostlong);
+        private static extern uint htonl(uint hostlong);
 
         private class TRequestHeader
         {

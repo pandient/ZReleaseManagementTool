@@ -25,6 +25,14 @@ namespace RelSvr
             }
         }
 
+        public static string Adminstrators
+        {
+            get
+            {
+                return Item("Adminstrators");
+            }
+        }
+
         public static string ProductDirectory(string product)
         {
             return Item(product);

@@ -136,9 +136,10 @@ namespace RelSvr
 
         private static int REQ_PRODUCT = 0x1;
         private static int REQ_VERSIONS = 0x2;
+        private static int REQ_ADMIN = 0x3;
         private static int REQ_VERSION_FILE_LIST = 0x4;
-        private static int REQ_DOWNLOAD_ALERT = 0x100;
-        private static int REQ_DOWNLOAD_FILE = 0x200;
+        private static int REQ_DOWNLOAD_FILE = 0x5;
+        private static int REQ_DOWNLOAD_ALERT = 0x6;
 
         private static uint STATUS_OK = 0;
         private static uint STATUS_ERR = 0x1;
@@ -150,6 +151,7 @@ namespace RelSvr
         private static uint ERR_INVALID_COUNT = 0x1000;
         private static uint ERR_EXCEPTION = 0x2000;
         private static uint ERR_ALERT = 0x4000;
+        private static uint ERR_NOT_ADMIN = 0x8000;
 
         private Socket m_socket = null;
         private TRequestHeader m_request_hdr = new TRequestHeader();
@@ -194,6 +196,10 @@ namespace RelSvr
                     else if (m_request_hdr.request_id == REQ_DOWNLOAD_FILE)
                     {
                         SendFile();
+                    }
+                    else if (m_request_hdr.request_id == REQ_ADMIN)
+                    {
+                        SendAdmin();
                     }
                     else
                     {
@@ -500,6 +506,17 @@ namespace RelSvr
                 SendHeader(0, STATUS_ERR|ERR_ALERT, alert);
             }
             
+        }
+
+        private void SendAdmin()
+        {
+            bool b;
+            string[] admins;
+
+            admins = CSettings.Adminstrators.Split(',');
+            b = Array.FindIndex(admins, (w) => { return string.Compare(w, m_request_hdr.user, true) == 0; })>=0;
+
+            SendHeader(0, (b? STATUS_OK:STATUS_ERR | ERR_NOT_ADMIN), null);
         }
 
         private void SendError()

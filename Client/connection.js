@@ -5,41 +5,53 @@ var respBuff;
 
 const PRODUCTS = 1;
 const VERSIONS = 2;
+const FILE_LIST = 4;
+const DOWNLOAD_FILE = 5;
+
+
 
 var client = new net.Socket();
+init();
+
+function init() {
+	client.on('data', function (data) {
+			console.log('Received: ' + data);
+			if (client.messageReadSize == 0) {
+				client.messageSize = data.readInt32LE(0);
+				//client.messageSize = 20;
+				console.log(client.messageSize);
+			}
+			client.messageReadSize += data.length;
+			respBuff = Buffer.concat([respBuff, data], respBuff.length + data.length);
+
+			if (client.messageReadSize >= client.messageSize + 64) {
+				processResponse(respBuff);
+				//displayProducts(respBuff);
+				client.destroy();
+			}
+
+			//client.destroy(); // kill client after server's response
+		});
+
+		client.on('close', function () {
+			console.log('Connection closed');
+		});
+
+		client.on('error', function (error) {
+			console.log('Error' + error);
+			alert(error);
+		});
+}
 
 function connect() {
     if (client.readyState != 'closed') {
         return;
     }
-    client.connect(10001, '10.0.1.23', function() {
+    client.connect(10001, '10.0.1.207', function() {
         console.log('Connected');
     });
 
-    client.on('data', function (data) {
-        console.log('Received: ' + data);
-        if (client.bufferSize == 0) {
-            client.messageSize = data.readInt32LE(0);
-        }
-        client.messageReadSize += data.length;
-        respBuff = Buffer.concat([respBuff, data], respBuff.length + data.length);
-
-        if (client.messageReadSize >= client.messageSize + 64) {
-            processResponse(respBuff);
-            //displayProducts(respBuff);
-        }
-
-        //client.destroy(); // kill client after server's response
-    });
-
-    client.on('close', function () {
-        console.log('Connection closed');
-    });
-
-    client.on('error', function (error) {
-        console.log('Error' + error);
-        alert(error);
-    });
+    
 }
 
 function resetBuffer() {
@@ -54,10 +66,7 @@ function isBusy() {
 }
 
 function getProducts() {
-    if (isBusy()) {
-        console.log("Connection is busy");
-        return;
-    }
+ 
     connect();
     resetBuffer();
 	    
@@ -66,12 +75,9 @@ function getProducts() {
 	client.write(reqBuff);
 }
 
-function getVersions() {
-    if (isBusy()) {
-        console.log("Connection is busy");
-        return;
-    }
-    var productName = getProductName();
+function getVersions(product) {
+  
+    var productName = product;
     connect();
     resetBuffer();
 
@@ -83,30 +89,45 @@ function getVersions() {
 
 }
 
+function getFileList(product, version) {
+  
+	var productName = product;
+    var versionName = version;
+	
+    connect();
+    resetBuffer();
+
+    reqBuff.writeUInt8(versionName.length + productName.length + 1, 3);
+    reqBuff.writeUInt8(FILE_LIST, 7);
+    reqBuff.write('tony', 8);
+    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(productName + '\r' + versionName)], reqBuff.length + productName.length + versionName.length + 1);
+    client.write(reqBuff);
+
+}
+
+function getFile(product, version, file) {
+  
+    var productName = product;
+    var versionName = version;
+	var fileName = file;
+	
+	var query = productName + '\r' + versionName + '\r' +  fileName;
+    connect();
+    resetBuffer();
+
+    reqBuff.writeUInt8(query.length, 3);
+    reqBuff.writeUInt8(DOWNLOAD_FILE, 7);
+    reqBuff.write('tony', 8);
+    reqBuff = Buffer.concat([reqBuff, new buffer.Buffer(query)], reqBuff.length + query.length);
+    client.write(reqBuff);
+
+}
+
 function getProductName() {
     var input = document.getElementById('productName');
     return input.value;
 }
 
-function displayProducts(data){
-	var div = document.getElementById('products');
-	div.innerHTML = data.slice(64);
-}
 
-function displayVersions(data) {
 
-}
 
-function processResponse(data) {
-    var reqId = data.readInt32LE(4);
-    switch (reqId) {
-        case PRODUCTS:
-            displayProducts(data);
-            break;
-        case VERSIONS:
-            displayVersions(data);
-            break;
-        default:
-            break;
-    }
-}

@@ -105,7 +105,7 @@ namespace RelSvr
         {
             CheckProduct(product);
 
-            string fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\.alert";
+            string fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\$alert";
 
             alert = string.Empty;
             if (!File.Exists(fileName)) return;

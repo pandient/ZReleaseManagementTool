@@ -84,6 +84,16 @@ namespace RelSvr
 
             fileLen = (uint)(new FileInfo(fileName).Length);
         }
+
+        public static void GetAlert(string product, string version, out string alert)
+        {
+            string fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\.alert";
+
+            alert = string.Empty;
+            if (!File.Exists(fileName)) return;
+
+            alert = File.ReadAllText(fileName);
+        }
     }
 
     internal class CService
@@ -139,6 +149,7 @@ namespace RelSvr
         private static uint ERR_EMPTY = 0x0800;
         private static uint ERR_INVALID_COUNT = 0x1000;
         private static uint ERR_EXCEPTION = 0x2000;
+        private static uint ERR_ALERT = 0x4000;
 
         private Socket m_socket = null;
         private TRequestHeader m_request_hdr = new TRequestHeader();
@@ -441,6 +452,54 @@ namespace RelSvr
 
         private void SendAlert()
         {
+            byte[] buff = new byte[m_request_hdr.data_length];
+            string tmp;
+            string[] data;
+            string product;
+            string version;
+            string alert;
+
+            ReadData(buff, (int)m_request_hdr.data_length);
+            tmp = Byte2Str(buff, 0, (int)m_request_hdr.data_length);
+            data = tmp.Split(SEP);
+            if (data.Length != 2)
+            {
+                SendHeader(0, STATUS_ERR | ERR_INVALID_COUNT, tmp);
+                return;
+            }
+            product = data[0];
+            version = data[1];
+
+            if (string.IsNullOrEmpty(product))
+            {
+                SendHeader(0, STATUS_ERR | ERR_INVALID_NAME, "product is empty");
+                return;
+            }
+            if (string.IsNullOrEmpty(version))
+            {
+                SendHeader(0, STATUS_ERR | ERR_INVALID_NAME, "version is empty");
+                return;
+            }
+
+            try
+            {
+                CRelease.GetAlert(product, version, out alert);
+            }
+            catch (Exception ex)
+            {
+                SendHeader(0, STATUS_ERR | ERR_EXCEPTION, ex.Message);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(alert))
+            {
+                SendHeader(0, STATUS_OK, null);
+            }
+            else
+            {
+                SendHeader(0, STATUS_ERR|ERR_ALERT, alert);
+            }
+            
         }
 
         private void SendError()

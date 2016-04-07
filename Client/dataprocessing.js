@@ -146,9 +146,11 @@ function saveFile(data) {
 
 function displayAlert(data){
 	var status = data.readInt32LE(40);
-	checkAlert.callback();
-	if(status) {
-		alert(data.slice(64), "Alert");
+	if (!status) {
+	    checkAlert.callback();
+	}
+	else {
+	    alert(data.slice(64), "Alert");
 	}
 }
 

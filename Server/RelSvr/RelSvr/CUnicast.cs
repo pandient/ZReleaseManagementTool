@@ -12,6 +12,7 @@ namespace RelSvr
 {
     internal class CRelease
     {
+        private const string ALERT = "$alert";
 
         private CRelease()
         {
@@ -106,7 +107,7 @@ namespace RelSvr
                     file = f;
                 }
 
-                if (file.ToArray()[0] != '.')
+                if (string.Compare(file, ALERT, true) != 0)
                 {
                     all.Add(file);
                 }
@@ -133,7 +134,7 @@ namespace RelSvr
         {
             CheckProduct(product);
 
-            fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\$alert";
+            fileName = CSettings.ProductDirectory(product) + "\\" + version + "\\" + ALERT;
             fileLen = 0;
             if (!File.Exists(fileName)) return;
             fileLen = (uint)(new FileInfo(fileName).Length);

@@ -12,7 +12,11 @@ const FILE_LIST = 4;
 const DOWNLOAD_FILE = 5;
 const ALERT = 6;
 
-var USER = 'saad';
+var USER = function () {
+var path = require('path');
+var userName = process.env['USERPROFILE'].split(path.sep)[2];
+return userName;
+}();
 var client = new net.Socket();
 
 client.on('data', function (data) {

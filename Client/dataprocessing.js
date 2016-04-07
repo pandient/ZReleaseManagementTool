@@ -12,9 +12,23 @@ var iconsList = ["icon icon-doc-text-inv", "icon icon-vcard", "icon icon-downloa
 		"icon icon-archive", "icon icon-box", "icon icon-bag"];
 
 function uintToString(uintArray) {
-    var encodedString = String.fromCharCode.apply(null, uintArray),
-        decodedString = decodeURIComponent(escape(encodedString));
-    return decodedString;
+	return String.fromCharCode.apply(null, uintArray);
+}
+
+function setActiveItem(item) {
+	navigationClass = "nav-group-item";
+	if (item.classList != 0) {
+		var elements = document.getElementsByClassName(navigationClass);
+		for (var i=0; i<elements.length; i++) {
+			elements[i].style.backgroundColor = "#f5f5f4";
+		}
+	} else {
+		var elements = document.getElementById("table1").children[0].children;
+		for (var i=0; i<elements.length; i++) {
+			elements[i].style.backgroundColor = "white";
+		}
+	}
+	item.style.backgroundColor = "#dcdfe1";
 }
 
 function displayProducts(data) {
@@ -24,7 +38,7 @@ function displayProducts(data) {
 	for (var key in products) {
 		var span = document.createElement("span");
 		if (key == 0) {
-			span.setAttribute("class", "nav-group-item active");
+			span.setAttribute("class", "nav-group-item");
 		} else {
 			span.setAttribute("class", "nav-group-item");
 		}
@@ -33,6 +47,7 @@ function displayProducts(data) {
 		span.innerHTML = products[key];
 		span.addEventListener("click", function(handle) {
 			currentProduct = this.innerText;
+			setActiveItem(this);
 			getVersions(currentProduct);
 		});
 		elements[0].appendChild(span);
@@ -60,24 +75,21 @@ function displayVersions(data) {
 		var row = document.createElement("tr");
 		var cell = document.createElement("td");
 		cell.innerHTML = versions[key];
-		// if (key == 0) {
-			// row.setAttribute("class", "active");
-		// }
 		row.appendChild(cell);
 		row.addEventListener("click", function(handle) {
 			currentVersion = this.innerText;
-			 checkAlert(currentProduct, currentVersion, function() {
-				 getFileList(currentProduct, currentVersion);
-			 });
-			//getFileList(currentProduct, currentVersion);
+			setActiveItem(this);
+			// checkAlert(currentProduct, currentVersion, function() {
+				// getFileList(currentProduct, currentVersion);
+			// });
+			getFileList(currentProduct, currentVersion);
+			
 		});
-		
 		tableBody.appendChild(row);
 	}
 	document.getElementById("table1").appendChild(tableBody);
 	//callGetFilesList();
 }
-
 
 // don't use this
 function callGetFilesList() {
@@ -103,7 +115,10 @@ function displayFileList(data) {
 		tableBody.appendChild(row);
 		row.addEventListener("click", function(handle) {
 			currentFile = this.innerText;
-			getFile(currentProduct, currentVersion ,currentFile);
+			checkAlert(currentProduct, currentVersion, function() {
+					getFile(currentProduct, currentVersion ,currentFile);
+			 });
+			//getFile(currentProduct, currentVersion ,currentFile);
 		});
 	}
 	document.getElementById("table2").appendChild(tableBody);
@@ -124,22 +139,22 @@ function saveFile(data) {
 		fs.writeFile(name, data.slice(64) , (err) => {
 				if (err) throw err;
 				console.log('It\'s saved!');
+				alert('It\'s saved!', 'ZE');
 		});
 	});
 }
 
 function displayAlert(data){
 	var status = data.readInt32LE(40);
-	
 	checkAlert.callback();
-	if(status){
-		alert(data.slice(64));
+	if(status) {
+		alert(data.slice(64), "Alert");
 	}
 }
 
-
 function processResponse(data) {
     var reqId = data.readInt32LE(4);
+	console.log(reqId);
     switch (reqId) {
         case PRODUCTS:
             displayProducts(data);
